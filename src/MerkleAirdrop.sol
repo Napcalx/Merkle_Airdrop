@@ -5,7 +5,7 @@ import {BCUToken} from "./BCUToken.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract MerkleAridrop {
+contract MerkleAirdrop {
     using SafeERC20 for IERC20;
     // some list of addresses
     // Allow someone in the list to claim a token
@@ -42,5 +42,13 @@ contract MerkleAridrop {
         s_hasClaimed[account] = true;
         emit ClaimToken(account, amount);
         i_airdropToken.safeTransfer(account, amount);
+    }
+
+    function getMerkleRoot() external view returns (bytes32) {
+        return i_merkleRoot;
+    }
+
+    function getAirdropToken() external view returns (IERC20) {
+        return i_airdropToken;
     }
 }
