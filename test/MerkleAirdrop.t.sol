@@ -1,7 +1,8 @@
 //SPDX-License_identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {MerkleAirdrop} from "../src/MerkleAirdrop.sol";
 import {BCUToken} from "../src/BCUToken.sol";
 import {ZkSyncChainChecker} from "lib/foundry-devops/src/ZkSyncChainChecker.sol";
@@ -22,6 +23,7 @@ contract MerkleAirdropTest is Test, ZkSyncChainChecker {
     bytes32 proof3 =
         0x702e28c6b8f3f5d4686c6d5e2229deaf83e0663bf7781feab9e13cf40e9c74f2;
     bytes32[] public PROOF = [proof1, proof2, proof3];
+    address gasPayer;
     address user;
     uint256 userPrivKey;
 
@@ -36,14 +38,24 @@ contract MerkleAirdropTest is Test, ZkSyncChainChecker {
             token.transfer(address(airdrop), AMOUNT_AVAILABLE); // transfer the tokens to the airdrop contract
         }
         (user, userPrivKey) = makeAddrAndKey("user");
+        gasPayer = makeAddr("gasPayer");
     }
 
     function testUserCanClaim() external {
         uint256 startingBal = token.balanceOf(user);
         console.log("Starting balance: ", startingBal);
+        bytes32 digest = airdrop.getMessageHash(user, AMOUNT);
+        console.log("Digest: ");
+        console.logBytes32(digest);
 
-        vm.prank(user);
-        airdrop.claim(user, AMOUNT, PROOF);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivKey, digest);
+
+        vm.prank(gasPayer);
+        console.log("Gas payer: ", gasPayer);
+        airdrop.claim(user, AMOUNT, PROOF, v, r, s);
+        console.log("V: %d", v);
+        console.logBytes32(r);
+        console.logBytes32(s);
 
         uint256 endingBal = token.balanceOf(user);
         console.log("Ending balance: ", endingBal);
